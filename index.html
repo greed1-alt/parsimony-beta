@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Parsimony">
+<meta name="theme-color" content="#ffffff">
+<meta name="description" content="Parsimony — календарь, задачи, привычки, цели и финансы в одном приложении. Пишите как говорите: «завтра в 10 врач, кофе 350».">
+<!-- Защита от чужого кода: скрипты, стили и шрифты — только файлы этого сайта; связь — только с этим сайтом и своим сервером Supabase -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://smartcaptcha.yandexcloud.net; frame-src https://smartcaptcha.yandexcloud.net; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob: https://tile.openstreetmap.org; connect-src 'self' https://zgasnvubcdprgsypkglh.supabase.co https://nominatim.openstreetmap.org https://smartcaptcha.yandexcloud.net; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="128x128" href="favicon.png"><!-- круглая иконка во вкладке браузера (на бете — пробная из tools/beta-icons) -->
+<link rel="preconnect" href="https://zgasnvubcdprgsypkglh.supabase.co" crossorigin><!-- связь с аккаунтом готовится, пока грузится страница -->
+<!-- Свои шрифты (css/fonts.css, файлы в fonts/): Inter и Josefin Sans 300 (надпись Parsimony, WORDMARK в core.js). Другой WORDMARK — добавить его шрифт туда и в FILES в sw.js -->
+<link rel="preload" href="fonts/inter-cyrillic.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fonts.css">
+<title>Parsimony</title>
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/sections.css">
+<link rel="stylesheet" href="css/ui2.css">
+</head>
+<body class="ui2">
+<div class="app">
+  <aside id="side"></aside>
+  <div class="content">
+    <header>
+      <div class="top">
+        <button class="ic chev m-only" data-act="prev" aria-label="Назад"></button>
+        <h1 id="ttl"></h1>
+        <button class="ic chev m-only" data-act="next" aria-label="Вперёд"></button>
+        <div class="navg d-only"><button class="ic" data-act="prev" aria-label="Назад" title="Назад (←)"></button><button class="pill" data-act="today" title="Сегодня (T)">Сегодня</button><button class="ic" data-act="next" aria-label="Вперёд" title="Вперёд (→)"></button></div>
+        <div class="segc d-only"><button data-act="v" data-v="month" title="Месяц (M)">Месяц</button><button data-act="v" data-v="week" title="Неделя (W)">Неделя</button><button data-act="v" data-v="day" title="День (D)">День</button><button data-act="v" data-v="list" title="Список (L)">Список</button></div>
+        <button class="btn-new m-only" data-act="add"></button>
+        <button class="ic m-only hdr-sr" data-act="search" aria-label="Поиск" title="Поиск"></button>
+        <button class="ic hdr-ai" data-act="aiopen" aria-label="Помощник" title="Помощник Parsimony"></button>
+        <button class="ic hdr-msg" data-act="msgs" aria-label="Сообщения" title="Сообщения" hidden></button>
+        <button class="ic hdr-ava" data-act="accmenu" aria-label="Меню профиля" title="Меню профиля" aria-haspopup="menu" aria-expanded="false"></button>
+      </div>
+      <div class="bar2 m-only">
+        <div class="segc"><button data-act="v" data-v="month">Месяц</button><button data-act="v" data-v="week">Неделя</button><button data-act="v" data-v="day">День</button><button data-act="v" data-v="list">Лента</button><button data-act="v" data-v="tasks">Задачи</button></div>
+        <div id="secinfo" class="secinfo"></div>
+        <button class="pill" data-act="today">Сегодня</button>
+      </div>
+    </header>
+    <main id="main"></main>
+  </div>
+</div>
+<nav id="tabbar" class="m-only" aria-label="Разделы"></nav>
+<div id="ov"><div id="sh" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+<div id="qc" class="qc" role="dialog" aria-label="Новое событие"></div>
+<div id="cmd" role="dialog" aria-modal="true" aria-label="Поиск и команды"><div class="cmd-box"><div class="cmd-in"><span id="cmd_ic" aria-hidden="true"></span><input id="cmd_q" type="text" role="combobox" aria-expanded="true" aria-controls="cmd_res" aria-autocomplete="list" aria-label="Поиск по записям и командам" placeholder="Найти дело, трату, заметку, привычку, цель или команду" autocomplete="off"></div><div id="cmd_res" role="listbox" aria-label="Найдено"></div><div class="cmd-foot" aria-hidden="true"><span><kbd>↑</kbd> <kbd>↓</kbd> выбрать</span><span><kbd>Enter</kbd> выполнить</span><span><kbd>Esc</kbd> закрыть</span></div></div></div>
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+<input id="imp_file" type="file" accept="application/json,.json" hidden>
+
+<script src="js/core.js"></script>
+<script src="js/names.js"></script>
+<script src="js/a11y.js"></script>
+<script src="js/look.js"></script>
+<script src="js/help.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/sections.js"></script>
+<script src="js/tasks.js"></script>
+<script src="js/habits.js"></script>
+<script src="js/finance.js"></script>
+<script src="js/goals.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/timer.js"></script>
+<script src="js/ui2.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/tour.js"></script>
+<script src="js/input.js"></script>
+<script src="js/share.js"></script>
+<script src="js/cloud.js"></script>
+<script src="js/friends.js"></script>
+<script src="js/chat.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/plans.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/notify.js"></script>
+<script src="js/assistant.js"></script>
+<script src="js/map.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
